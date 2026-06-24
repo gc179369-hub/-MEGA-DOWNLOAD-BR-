@@ -13,10 +13,10 @@ Este comando garante que o Termux consiga salvar os vídeos na pasta de Download
 
 ```bash
 termux-setup-storage
-
+```
 ⚡ Passo 2: Instalação e Configuração Automatizada
 Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente:
-
+```bash
 export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg curl yt-dlp ncurses-utils ca-certificates -y && cat << 'EOF' > baixar
 #!/bin/bash
 
@@ -142,9 +142,8 @@ while true; do
 done
 EOF
 chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR INSTALADO CORRETAMENTE! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
-
+```
 📱 Como abrir o programa depois de instalado?
 Sempre que abrir o Termux, basta digitar:
-
+```bash
 baixar
-
