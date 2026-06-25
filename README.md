@@ -15,9 +15,9 @@ Este comando garante que o Termux consiga salvar os vídeos na pasta de Download
 termux-setup-storage
 ```
 ⚡ Passo 2: Instalação e Configuração Automatizada
-Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente:
+Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente se aparecer mais uma tela pedindo para você digitar y ou n basta digitar " y " para sim:
 ```bash
-export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg curl yt-dlp ncurses-utils ca-certificates -y && cat << 'EOF' > baixar
+export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg python python-pip termux-api ca-certificates ncurses-utils -y && pip install curl-cffi yt-dlp && termux-setup-storage && cat << 'EOF' > baixar
 #!/bin/bash
 
 # SISTEMA DE CORES HACKER
@@ -92,10 +92,26 @@ while true; do
 
         echo ""
 
+        # VERIFICA SE A URL É DO SITE ALVO PROTEGIDO
+        if [[ "$URL" =~ pornhub\.com ]]; then
+            IS_PORNHUB=true
+        else
+            IS_PORNHUB=false
+        fi
+
         case $OPCAO in
             1)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE VÍDEO...${RESET}"
-                if yt-dlp -f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1]/best" --merge-output-format mp4 -P "$PASTA_DESTINO" "$URL"; then
+                
+                if [ "$IS_PORNHUB" = true ]; then
+                    # Usa o disfarce (--impersonate chrome) que fez funcionar no seu teste
+                    yt-dlp --impersonate chrome -f "best" -P "$PASTA_DESTINO" "$URL"
+                else
+                    # Mantém o seu comando padrão intocado para TikTok, Instagram, etc.
+                    yt-dlp -f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1]/best" --merge-output-format mp4 -P "$PASTA_DESTINO" "$URL"
+                fi
+
+                if [ $? -eq 0 ]; then
                     matrix_effect
                     echo -e "${VERDE}✔ VÍDEO BAIXADO E COMPILADO COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
@@ -106,7 +122,15 @@ while true; do
                 ;;
             2)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE ÁUDIO...${RESET}"
-                if yt-dlp -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"; then
+                
+                if [ "$IS_PORNHUB" = true ]; then
+                    # Aplica o disfarce também no modo áudio para não tomar bloqueio
+                    yt-dlp --impersonate chrome -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"
+                else
+                    yt-dlp -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"
+                fi
+
+                if [ $? -eq 0 ]; then
                     matrix_effect
                     echo -e "${VERDE}✔ ÁUDIO CONVERTIDO EM MP3 COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
@@ -142,6 +166,7 @@ while true; do
 done
 EOF
 chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR INSTALADO CORRETAMENTE! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
+
 ```
 📱 Como abrir o programa depois de instalado?
 Sempre que abrir o Termux, basta digitar:
