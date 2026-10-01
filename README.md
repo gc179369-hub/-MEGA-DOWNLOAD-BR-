@@ -17,7 +17,7 @@ termux-setup-storage
 ⚡ Passo 2: Instalação e Configuração Automatizada
 Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente se aparecer mais uma tela pedindo para você digitar y ou n basta digitar " y " para sim:
 ```bash
-export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg python python-pip termux-api ca-certificates ncurses-utils -y && pip install curl-cffi yt-dlp && termux-setup-storage && cat << 'EOF' > baixar
+export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg curl ncurses-utils ca-certificates python python-pip -y && pip install --upgrade "yt-dlp[curl-cffi]" && cat << 'EOF' > baixar
 #!/bin/bash
 
 # SISTEMA DE CORES HACKER
@@ -51,6 +51,7 @@ while true; do
     echo -e "${CIANO}==================================================${RESET}"
     echo ""
     echo -e "${AMARELO}👉 DIGITE A PALAVRA-CHAVE [BAIXAR] PARA INICIAR${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [ATUALIZAR] PARA ATUALIZAR O YT-DLP + IMPERSONAÇÃO${RESET}"
     echo -e "${VERMELHO}👉 DIGITE [SAIR] PARA FECHAR O PROGRAMA${RESET}"
     echo ""
     read -p "SISTEMA > " COMANDO
@@ -60,6 +61,14 @@ while true; do
     if [ "$COMANDO_LOWER" = "sair" ]; then
         echo -e "\n${VERDE}Saindo do MEGA DOWNLOAD BR... Até logo!${RESET}\n"
         break
+    fi
+
+    if [ "$COMANDO_LOWER" = "atualizar" ]; then
+        echo -e "\n${VERDE}⚡ ATUALIZANDO O YT-DLP E MÓDULOS DE IMPERSONAÇÃO...${RESET}"
+        pip install --upgrade "yt-dlp[curl-cffi]"
+        echo -e "${VERDE}✔ ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!${RESET}"
+        sleep 2
+        continue
     fi
 
     if [ "$COMANDO_LOWER" = "baixar" ]; then
@@ -83,60 +92,36 @@ while true; do
         # SELEÇÃO TOTALMENTE EM AZUL CIANO DESTACADO
         echo ""
         echo -e "${CIANO}==================================================${RESET}"
-        echo -e "${CIANO}               SELECIONE A FUNÇÃO                 ${RESET}"
+        echo -e "${CIANO}               SELECIONE LA FUNÇÃO                 ${RESET}"
         echo -e "${CIANO}==================================================${RESET}"
-        echo -e "${CIANO} [ 1 ] BAIXAR VÍDEO (AVC1 + MP4A / MÁXIMA QUALIDADE)${RESET}"
-        echo -e "${CIANO} [ 2 ] BAIXAR ÁUDIO (MP3 / EXTRAÇÃO DIRETA NATIVA)  ${RESET}"
+        echo -e "${CIANO} [ 1 ] BAIXAR VÍDEO (MÁXIMA QUALIDADE / TODOS OS SITES)${RESET}"
+        echo -e "${CIANO} [ 2 ] BAIXAR ÁUDIO (MP3 / EXTRAÇÃO DIRETA NATIVA)     ${RESET}"
         echo -e "${CIANO}==================================================${RESET}"
         read -p "ESCOLHA UMA OPÇÃO (1 OU 2): " OPCAO
 
         echo ""
 
-        # VERIFICA SE A URL É DO SITE ALVO PROTEGIDO
-        if [[ "$URL" =~ pornhub\.com ]]; then
-            IS_PORNHUB=true
-        else
-            IS_PORNHUB=false
-        fi
-
         case $OPCAO in
             1)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE VÍDEO...${RESET}"
-                
-                if [ "$IS_PORNHUB" = true ]; then
-                    # Usa o disfarce (--impersonate chrome) que fez funcionar no seu teste
-                    yt-dlp --impersonate chrome -f "best" -P "$PASTA_DESTINO" "$URL"
-                else
-                    # Mantém o seu comando padrão intocado para TikTok, Instagram, etc.
-                    yt-dlp -f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1]/best" --merge-output-format mp4 -P "$PASTA_DESTINO" "$URL"
-                fi
-
-                if [ $? -eq 0 ]; then
+                if yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -P "$PASTA_DESTINO" "$URL"; then
                     matrix_effect
                     echo -e "${VERDE}✔ VÍDEO BAIXADO E COMPILADO COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
                 else
                     echo -e "\n${VERMELHO}❌ OCORREU UM ERRO NO PROCESSAMENTO DO VÍDEO ACIMA!${RESET}"
-                    echo -e "${AMARELO}Verifique o link ou a sua conexão de rede.${RESET}"
+                    echo -e "${AMARELO}Dica: Digite 'atualizar' no menu principal para atualizar as dependências.${RESET}"
                 fi
                 ;;
             2)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE ÁUDIO...${RESET}"
-                
-                if [ "$IS_PORNHUB" = true ]; then
-                    # Aplica o disfarce também no modo áudio para não tomar bloqueio
-                    yt-dlp --impersonate chrome -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"
-                else
-                    yt-dlp -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"
-                fi
-
-                if [ $? -eq 0 ]; then
+                if yt-dlp -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"; then
                     matrix_effect
                     echo -e "${VERDE}✔ ÁUDIO CONVERTIDO EM MP3 COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
                 else
                     echo -e "\n${VERMELHO}❌ OCORREU UM ERRO NA EXTRAÇÃO DO ÁUDIO ACIMA!${RESET}"
-                    echo -e "${AMARELO}Verifique o link ou a sua conexão de rede.${RESET}"
+                    echo -e "${AMARELO}Dica: Digite 'atualizar' no menu principal para atualizar as dependências.${RESET}"
                 fi
                 ;;
             *)
@@ -160,12 +145,12 @@ while true; do
         done
 
     else
-        echo -e "\n${VERMELHO}❌ PALAVRA-CHAVE INVÁLIDA! USE 'BAIXAR' OU 'SAIR'.${RESET}"
+        echo -e "\n${VERMELHO}❌ PALAVRA-CHAVE INVÁLIDA! USE 'BAIXAR', 'ATUALIZAR' OU 'SAIR'.${RESET}"
         sleep 2
     fi
 done
 EOF
-chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR INSTALADO CORRETAMENTE! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
+chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR COM SUPORTE A IMPERSONAÇÃO INSTALADO! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
 
 ```
 📱 Como abrir o programa depois de instalado?
