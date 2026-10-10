@@ -32,7 +32,7 @@ RESET="\e[0m"
 PASTA_DESTINO="/storage/emulated/0/Documents/Download"
 mkdir -p "$PASTA_DESTINO"
 
-# FUNÇÃO MATRIX REALISTA DE 10 SEGUNDOS (125 ciclos x 0.08s = 10 segundos)
+# FUNÇÃO MATRIX REALISTA DE 10 SEGUNDOS
 matrix_effect() {
     clear
     echo -e "${VERDE}"
@@ -89,12 +89,11 @@ while true; do
             continue
         fi
 
-        # SELEÇÃO TOTALMENTE EM AZUL CIANO DESTACADO
         echo ""
         echo -e "${CIANO}==================================================${RESET}"
         echo -e "${CIANO}               SELECIONE LA FUNÇÃO                 ${RESET}"
         echo -e "${CIANO}==================================================${RESET}"
-        echo -e "${CIANO} [ 1 ] BAIXAR VÍDEO (MÁXIMA QUALIDADE / TODOS OS SITES)${RESET}"
+        echo -e "${CIANO} [ 1 ] BAIXAR VÍDEO (MÁXIMA QUALIDADE / MP4 GALERIA)   ${RESET}"
         echo -e "${CIANO} [ 2 ] BAIXAR ÁUDIO (MP3 / EXTRAÇÃO DIRETA NATIVA)     ${RESET}"
         echo -e "${CIANO}==================================================${RESET}"
         read -p "ESCOLHA UMA OPÇÃO (1 OU 2): " OPCAO
@@ -104,9 +103,10 @@ while true; do
         case $OPCAO in
             1)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE VÍDEO...${RESET}"
-                if yt-dlp -f "bestvideo+bestaudio/best" --merge-output-format mp4 -P "$PASTA_DESTINO" "$URL"; then
+                # Baixa na melhor qualidade priorizando codecs universais H.264/AAC nativos do MP4
+                if yt-dlp -f "bv*[vcodec^=avc]+ba[acodec^=mp4a]/bv*+ba/best" -S "vcodec:h264,res,acodec:m4a" --merge-output-format mp4 --no-mtime -P "$PASTA_DESTINO" "$URL"; then
                     matrix_effect
-                    echo -e "${VERDE}✔ VÍDEO BAIXADO E COMPILADO COM SUCESSO!${RESET}"
+                    echo -e "${VERDE}✔ VÍDEO BAIXADO COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
                 else
                     echo -e "\n${VERMELHO}❌ OCORREU UM ERRO NO PROCESSAMENTO DO VÍDEO ACIMA!${RESET}"
@@ -115,7 +115,7 @@ while true; do
                 ;;
             2)
                 echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE ÁUDIO...${RESET}"
-                if yt-dlp -x --audio-format mp3 -P "$PASTA_DESTINO" "$URL"; then
+                if yt-dlp -x --audio-format mp3 --no-mtime -P "$PASTA_DESTINO" "$URL"; then
                     matrix_effect
                     echo -e "${VERDE}✔ ÁUDIO CONVERTIDO EM MP3 COM SUCESSO!${RESET}"
                     echo -e "${AMARELO}Salvo em: Documents/Download${RESET}"
@@ -127,7 +127,7 @@ while true; do
             *)
                 echo -e "${VERMELHO}❌ OPÇÃO INVÁLIDA NO SISTEMA!${RESET}"
                 ;;
-        esac
+            esac
 
         # RETORNO AO MENU
         echo ""
@@ -150,7 +150,7 @@ while true; do
     fi
 done
 EOF
-chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR COM SUPORTE A IMPERSONAÇÃO INSTALADO! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
+chmod +x baixar && mv baixar $PREFIX/bin/ && clear && echo -e "${VERDE}=== 🇧🇷 MEGA DOWNLOAD BR CORRIGIDO! 🇧🇷 ===${RESET}\n\nDigite apenas:\n\nbaixar\n"
 
 ```
 📱 Como abrir o programa depois de instalado?
