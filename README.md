@@ -471,28 +471,15 @@ modo_testar() {
     echo -e "\n${AMARELO}Relatório: cat $RELATORIO${RESET}"
 }
 
-configurar_rule34() {
-    local cfg="$HOME/.config/gallery-dl/config.json" uid key
-    read -p "rule34.xxx user-id: " uid
-    read -p "rule34.xxx api-key: " key
-    mkdir -p "$(dirname "$cfg")"
-    [ -f "$cfg" ] && cp "$cfg" "$cfg.bak"
-    printf '{"extractor":{"rule34":{"user-id":"%s","api-key":"%s"}}}\n' "$uid" "$key" > "$cfg"
-    echo -e "${VERDE}✔ Salvo em $cfg${RESET}"; sleep 2
-}
-
 while true; do
     clear
     echo -e "${CIANO}==================================================${RESET}"
     echo -e "${VERDE}[BR] ${VERDE_CLARO}🇧🇷  MEGA DOWNLOAD BR  🇧🇷 ${AMARELO}[BR]${RESET}"
     echo -e "${CIANO}==================================================${RESET}"
     echo ""
-    echo -e "${AMARELO}👉 DIGITE A PALAVRA-CHAVE [BAIXAR] PARA INICIAR${RESET}"
-    echo -e "${AMARELO}👉 DIGITE [LOTE] PARA BAIXAR VÁRIOS LINKS${RESET}"
-    echo -e "${AMARELO}👉 DIGITE [TESTAR] PARA TESTAR SUPORTE DOS LINKS${RESET}"
-    echo -e "${AMARELO}👉 DIGITE [CONFIGURAR] PARA CHAVES DO RULE34.XXX${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [BAIXAR] PARA AVANÇAR${RESET}"
     echo -e "${AMARELO}👉 DIGITE [ATUALIZAR] PARA ATUALIZAR O YT-DLP + IMPERSONAÇÃO${RESET}"
-    echo -e "${VERMELHO}👉 DIGITE [SAIR] PARA FECHAR O PROGRAMA${RESET}"
+    echo -e "${VERMELHO}👉 DIGITE [SAIR] PARA SAIR${RESET}"
     echo ""
     read -p "SISTEMA > " COMANDO
 
@@ -509,10 +496,6 @@ while true; do
             pip install --upgrade gallery-dl
             echo -e "${VERDE}✔ ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!${RESET}"
             sleep 2
-            continue
-            ;;
-        configurar)
-            configurar_rule34
             continue
             ;;
         lote)
@@ -533,7 +516,7 @@ while true; do
 
             if [ -z "$URL" ]; then
                 echo -e "\n${VERMELHO}❌ ERRO: NENHUMA URL DETECTADA!${RESET}"
-                echo -e "${AMARELO}Escreva VOLTAR para o menu principal.${RESET}"
+                echo -e "${AMARELO}DIGITE [VOLTAR] PARA VOLTAR${RESET}"
                 read -p "> " RETORNO
                 continue
             fi
@@ -578,7 +561,7 @@ while true; do
             esac
             ;;
         *)
-            echo -e "\n${VERMELHO}❌ PALAVRA-CHAVE INVÁLIDA! USE 'BAIXAR', 'LOTE', 'TESTAR', 'CONFIGURAR', 'ATUALIZAR' OU 'SAIR'.${RESET}"
+            echo -e "\n${VERMELHO}❌ PALAVRA-CHAVE INVÁLIDA! USE 'BAIXAR', 'ATUALIZAR' OU 'SAIR'.${RESET}"
             sleep 2
             continue
             ;;
@@ -586,7 +569,7 @@ while true; do
 
     echo ""
     echo -e "${CIANO}==================================================${RESET}"
-    echo -e "${AMARELO}DIGITE [VOLTAR] PARA RETORNAR AO MENU INICIAL${RESET}"
+    echo -e "${AMARELO}DIGITE [VOLTAR] PARA VOLTAR${RESET}"
     echo -e "${CIANO}==================================================${RESET}"
 
     while true; do
