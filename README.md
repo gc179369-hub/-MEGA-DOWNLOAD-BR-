@@ -6,7 +6,7 @@ Um projeto Brasileiro via Termux para baixar vídeos e áudios de qualquer site 
 
 ## 🚀 Como Instalar e Usar no Termux
 
-Siga os passos abaixo dentro do seu Termux. Copie um comando por vez e cole no aplicativo.
+Siga os dois passos abaixo dentro do seu Termux. Copie um comando por vez e cole no aplicativo.
 
 ### 🛠️ Passo 1: Dar permissão de armazenamento
 Este comando garante que o Termux consiga salvar os vídeos na pasta de Downloads do seu celular. Copie, cole no Termux e dê Enter (se aparecer uma mensagem na tela pedindo permissão, clique em "Permitir"):
@@ -15,20 +15,14 @@ Este comando garante que o Termux consiga salvar os vídeos na pasta de Download
 termux-setup-storage
 ```
 
-### 📦 Passo 2: Atualizar o sistema e instalar dependências
-Copie o comando abaixo, cole no Termux e dê Enter. Ele vai atualizar os pacotes e instalar o `yt-dlp`, `ffmpeg` e demais ferramentas necessárias (se pedir confirmação, digite `y`):
+⚡ Passo 2: Instalação e Configuração Automatizada
+Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente se aparecer mais uma tela pedindo para você digitar y ou n basta digitar " y " para sim:
 
 ```bash
-export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install -y ffmpeg curl ncurses-utils ca-certificates python python-pip file && pip install --upgrade "yt-dlp[default,curl-cffi]" gallery-dl
-```
-
-### ⚡ Passo 3: Criar e configurar o script
-Agora, copie o bloco completo abaixo, cole no Termux e dê Enter para gravar o programa com o menu limpo (`BAIXAR`, `ATUALIZAR`, `SAIR` e `VOLTAR`):
-
-```bash
-cat << 'EOF' > "$PREFIX/bin/baixar"
+export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg curl ncurses-utils ca-certificates python python-pip file -y && pip install --upgrade "yt-dlp[default,curl-cffi]" gallery-dl && cat << 'EOF' > "$HOME/baixar_src.sh"
 #!/bin/bash
 
+# SISTEMA DE CORES HACKER
 VERDE="\e[1;32m"
 VERDE_CLARO="\e[1;92m"
 CIANO="\e[1;36m"
@@ -36,6 +30,7 @@ AMARELO="\e[1;33m"
 VERMELHO="\e[1;31m"
 RESET="\e[0m"
 
+# GARANTE A CRIAÇÃO DA PASTA CORRETA (D Maiúsculo)
 PASTA_DESTINO="/storage/emulated/0/Documents/Download"
 if ! mkdir -p "$PASTA_DESTINO" 2>/dev/null || [ ! -w "$PASTA_DESTINO" ]; then
     echo -e "${AMARELO}Sem acesso ao armazenamento. Rode: termux-setup-storage${RESET}"
@@ -44,10 +39,12 @@ if ! mkdir -p "$PASTA_DESTINO" 2>/dev/null || [ ! -w "$PASTA_DESTINO" ]; then
 fi
 
 LOG="$HOME/.baixar_ultimo.log"
+RELATORIO="$HOME/relatorio_baixar.txt"
 UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 HDRS_DESKTOP=(-H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
               -H "Accept-Language: pt-BR,pt;q=0.9,en;q=0.8")
 
+# FUNÇÃO MATRIX REALISTA DE 10 SEGUNDOS (125 ciclos x 0.08s = 10 segundos)
 matrix_effect() {
     clear
     echo -e "${VERDE}"
@@ -252,7 +249,7 @@ baixar_capa_png() {
     destino="$PASTA_DESTINO/${titulo}_capa.png"
     [ -f "$destino" ] && destino="$PASTA_DESTINO/${titulo}_capa-$RANDOM.png"
     if curl -fsSL --max-time 30 -A "$UA" "$png_url" -o "$destino" 2>>"$LOG" && [ -s "$destino" ]; then
-        echo -e "${AMARELO}Capa salva em: $destino${RESET}"
+        echo -e "${AMARELO}🖼 Capa salva em: $destino${RESET}"
         return 0
     fi
     rm -f "$destino"
@@ -261,10 +258,10 @@ baixar_capa_png() {
 
 tentar_pimpbunny() {
     local url="$1" modo="$2" interativo="${3:-sim}" html titulo todos_cand com_res sem_res lista_final res has_res u tmp resp_capa idx=0
-    echo -e "${CIANO}-> varrendo pagina e listando MP4s encontrados...${RESET}"
+    echo -e "${CIANO}-> varrendo página e listando MP4s encontrados...${RESET}"
     html=$(curl -fsSL --compressed --max-time 30 -A "$UA" "${HDRS_DESKTOP[@]}" -e "$url" "$url" 2>>"$LOG") || return 1
     titulo=$(obter_titulo_traduzido "$url" "$html")
-    [ -n "$titulo" ] && echo -e "${CIANO}-> titulo (PT-BR): ${titulo}${RESET}"
+    [ -n "$titulo" ] && echo -e "${CIANO}-> título (PT-BR): ${titulo}${RESET}"
     [ -z "$titulo" ] && titulo="pimpbunny_$RANDOM"
 
     todos_cand=$(printf '%s' "$html" \
@@ -273,16 +270,27 @@ tentar_pimpbunny() {
         | filtrar_e_ordenar_videos)
 
     if [ -n "$todos_cand" ]; then
+        echo -e "${CIANO}--- RESULTADOS DA VARREDURA ---${RESET}"
+        while IFS=$'\t' read -r res has_res u; do
+            [ -z "$u" ] && continue
+            idx=$((idx+1))
+            echo -e "${AMARELO}  [$idx] resolução: ${res} -> ${u:0:90}...${RESET}"
+        done <<< "$todos_cand"
+        echo -e "${CIANO}--------------------------------${RESET}"
+
         com_res=$(printf '%s\n' "$todos_cand" | awk -F'\t' '$2 == 1 {print $0}')
         if [ -n "$com_res" ]; then
+            echo -e "${VERDE}✔ Priorizando links com resolução explícita na URL (maior primeiro)...${RESET}"
             lista_final="$com_res"
         else
             sem_res=$(printf '%s\n' "$todos_cand" | awk -F'\t' '$2 == 0 {print $0}')
+            echo -e "${AMARELO}⚠ Nenhum link com resolução na URL. Tentando links base [sem-res]...${RESET}"
             lista_final="$sem_res"
         fi
 
         while IFS=$'\t' read -r res has_res u; do
             [ -z "$u" ] && continue
+            echo -e "${AMARELO}  baixando direto do servidor [$res]: $u${RESET}"
             tmp=$(mktemp -d)
             if yt-dlp -P "$tmp" -o "midia_curta.mp4" --windows-filenames --no-playlist \
                   --compat-options allow-unsafe-ext --impersonate chrome \
@@ -300,8 +308,9 @@ tentar_pimpbunny() {
         done <<< "$lista_final"
     fi
 
+    echo -e "${AMARELO}⚠ Nenhum MP4 válido encontrado ou baixado no HTML deste vídeo.${RESET}"
     if [ "$interativo" = "sim" ]; then
-        read -p "Deseja baixar apenas a capa se disponivel? (s/N): " resp_capa
+        read -p "Deseja baixar apenas a capa se disponível? (s/N): " resp_capa
         case "$(echo "$resp_capa" | tr '[:upper:]' '[:lower:]')" in
             s|sim) baixar_capa_png "$html" "$titulo" ;;
         esac
@@ -312,6 +321,7 @@ tentar_pimpbunny() {
 tentar_gallerydl() {
     local url="$1" modo="$2" tmp rc titulo
     command -v gallery-dl >/dev/null 2>&1 || return 1
+    echo -e "${CIANO}-> fallback: gallery-dl${RESET}"
     titulo=$(obter_titulo_traduzido "$url" "" || true)
     tmp=$(mktemp -d)
     gallery-dl -q -d "$tmp" "$url" </dev/null 2> >(tee -a "$LOG" >&2)
@@ -333,12 +343,14 @@ extrair_midias_html() {
 
 tentar_scraper() {
     local url="$1" modo="$2" html found u tmp titulo
+    echo -e "${CIANO}-> fallback: busca direta no HTML da página (modo PC)${RESET}"
     html=$(curl -fsSL --compressed --max-time 30 -A "$UA" "${HDRS_DESKTOP[@]}" -e "$url" "$url" 2>>"$LOG") || return 1
     titulo=$(obter_titulo_traduzido "$url" "$html")
     found=$(printf '%s' "$html" | extrair_midias_html)
-    [ -z "$found" ] && return 1
+    [ -z "$found" ] && { echo "nenhum link de midia achado no HTML (provavel pagina renderizada por JavaScript)" >> "$LOG"; return 1; }
     while IFS= read -r u; do
         [ -z "$u" ] && continue
+        echo -e "${AMARELO}  candidato: $u${RESET}"
         tmp=$(mktemp -d)
         if yt-dlp -P "$tmp" -o "midia_curta.mp4" --windows-filenames --no-playlist \
               --compat-options allow-unsafe-ext --impersonate chrome \
@@ -356,6 +368,12 @@ baixar_url() {
     local -a base modo_args ex
     local url; url=$(preparar_url "$url_orig")
 
+    if [[ "$url" == *rule34video.com* ]]; then
+        echo -e "\n${VERMELHO}❌ Site não suportado, digite outro site.${RESET}"
+        echo "site nao suportado (rule34video): $url_orig" >> "$LOG"
+        return 1
+    fi
+
     : > "$LOG"
 
     if [[ "$url" == *pimpbunny.com* ]]; then
@@ -363,10 +381,11 @@ baixar_url() {
     fi
 
     titulo_ptbr=$(obter_titulo_traduzido "$url" "" || true)
-    [ -n "$titulo_ptbr" ] && echo -e "${CIANO}-> titulo (PT-BR): ${titulo_ptbr}${RESET}"
+    [ -n "$titulo_ptbr" ] && echo -e "${CIANO}-> título (PT-BR): ${titulo_ptbr}${RESET}"
 
     if [ "$modo" = "video" ]; then
         if [[ "$url" == *pornhub.com* ]]; then
+            echo -e "${CIANO}-> Pornhub detectado: limitando resolução máxima a 1080p...${RESET}"
             modo_args=(-f "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/bv*[height<=1080]+ba/b[height<=1080]/b" --merge-output-format mp4 --downloader ffmpeg)
         else
             modo_args=(-f "bv*[ext=mp4]+ba[ext=m4a]/bv*+ba/b" --merge-output-format mp4)
@@ -377,6 +396,7 @@ baixar_url() {
 
     for extra in "--impersonate chrome" "--impersonate chrome --extractor-args generic:impersonate" ""; do
         n=$((n+1))
+        echo -e "${CIANO}-> yt-dlp, tentativa $n/3${RESET}"
         ex=(); [ -n "$extra" ] && read -ra ex <<< "$extra"
         tmp=$(mktemp -d)
         base=(-P "$tmp" -o "item_${n}_%(autonumber)s.%(ext)s" --windows-filenames --compat-options allow-unsafe-ext
@@ -392,15 +412,87 @@ baixar_url() {
     return 1
 }
 
+pedir_arquivo() {
+    local ARQ
+    read -p "Arquivo com os links [$HOME/links.txt]: " ARQ
+    ARQ="${ARQ:-$HOME/links.txt}"
+    if [ ! -f "$ARQ" ]; then
+        echo -e "${VERMELHO}❌ Arquivo não encontrado: $ARQ${RESET}" >&2; return 1
+    fi
+    echo "$ARQ"
+}
+
+modo_lote() {
+    local ARQ OP M linha u ok=0 falha=0
+    ARQ=$(pedir_arquivo) || { sleep 2; return; }
+    read -p "1 = VÍDEO, 2 = ÁUDIO MP3: " OP
+    case $OP in 1) M=video;; 2) M=audio;; *) echo -e "${VERMELHO}Opção inválida${RESET}"; sleep 2; return;; esac
+    : > "$RELATORIO"
+    while IFS= read -r linha || [ -n "$linha" ]; do
+        u=$(extrair_url "$linha") || continue
+        echo -e "\n${AMARELO}==> $u${RESET}"
+        if baixar_url "$u" "$M" "nao"; then
+            ok=$((ok+1)); echo "OK    $u" >> "$RELATORIO"
+        else
+            falha=$((falha+1)); echo "FALHA $u" >> "$RELATORIO"
+            grep -E "ERROR|WARNING|nenhum link|site nao suportado|rejeitado" "$LOG" | tail -n 4 | sed 's/^/      /' >> "$RELATORIO"
+        fi
+    done < "$ARQ"
+    matrix_effect
+    echo -e "\n${VERDE}✔ LOTE FINALIZADO: $ok ok, $falha falha(s)${RESET}"
+    echo -e "${AMARELO}Relatório: cat $RELATORIO${RESET}"
+}
+
+modo_testar() {
+    local ARQ linha u r erro errfile
+    ARQ=$(pedir_arquivo) || { sleep 2; return; }
+    : > "$RELATORIO"
+    errfile=$(mktemp)
+    while IFS= read -r linha || [ -n "$linha" ]; do
+        u=$(extrair_url "$linha") || continue
+        u=$(preparar_url "$u")
+        echo -e "${AMARELO}testando: $u${RESET}"
+        if [[ "$u" == *rule34video.com* ]]; then
+            echo -e "${VERMELHO}  Site não suportado, digite outro site.${RESET}"
+            echo "NAO-SUPORTADO $u :: rule34video" >> "$RELATORIO"
+            continue
+        fi
+        : > "$errfile"
+        r=$(yt-dlp --simulate --no-warnings --impersonate chrome --playlist-items 1 --print "%(extractor)s" "$u" 2>"$errfile" </dev/null | head -n1)
+        erro=$(tail -n1 "$errfile")
+        if [ -n "$r" ]; then
+            echo -e "${VERDE}  OK reconhecido ($r)${RESET}"; echo "RECONHECIDO ($r) $u" >> "$RELATORIO"
+        else
+            echo -e "${VERMELHO}  SEM EXTRATOR: ${erro:-motivo desconhecido}${RESET}"
+            echo "SEM-EXTRATOR $u :: ${erro:-sem mensagem de erro}" >> "$RELATORIO"
+        fi
+    done < "$ARQ"
+    rm -f "$errfile"
+    echo -e "\n${AMARELO}Relatório: cat $RELATORIO${RESET}"
+}
+
+configurar_rule34() {
+    local cfg="$HOME/.config/gallery-dl/config.json" uid key
+    read -p "rule34.xxx user-id: " uid
+    read -p "rule34.xxx api-key: " key
+    mkdir -p "$(dirname "$cfg")"
+    [ -f "$cfg" ] && cp "$cfg" "$cfg.bak"
+    printf '{"extractor":{"rule34":{"user-id":"%s","api-key":"%s"}}}\n' "$uid" "$key" > "$cfg"
+    echo -e "${VERDE}✔ Salvo em $cfg${RESET}"; sleep 2
+}
+
 while true; do
     clear
     echo -e "${CIANO}==================================================${RESET}"
-    echo -e "${VERDE}[BR] ${VERDE_CLARO}MEGA DOWNLOAD BR ${AMARELO}[BR]${RESET}"
+    echo -e "${VERDE}[BR] ${VERDE_CLARO}🇧🇷  MEGA DOWNLOAD BR  🇧🇷 ${AMARELO}[BR]${RESET}"
     echo -e "${CIANO}==================================================${RESET}"
     echo ""
-    echo -e "${AMARELO}DIGITE [BAIXAR] PARA BAIXAR${RESET}"
-    echo -e "${AMARELO}DIGITE [ATUALIZAR] PARA ATUALIZAR${RESET}"
-    echo -e "${VERMELHO}DIGITE [SAIR] PARA SAIR${RESET}"
+    echo -e "${AMARELO}👉 DIGITE A PALAVRA-CHAVE [BAIXAR] PARA INICIAR${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [LOTE] PARA BAIXAR VÁRIOS LINKS${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [TESTAR] PARA TESTAR SUPORTE DOS LINKS${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [CONFIGURAR] PARA CHAVES DO RULE34.XXX${RESET}"
+    echo -e "${AMARELO}👉 DIGITE [ATUALIZAR] PARA ATUALIZAR O YT-DLP + IMPERSONAÇÃO${RESET}"
+    echo -e "${VERMELHO}👉 DIGITE [SAIR] PARA FECHAR O PROGRAMA${RESET}"
     echo ""
     read -p "SISTEMA > " COMANDO
 
@@ -408,78 +500,109 @@ while true; do
 
     case "$COMANDO_LOWER" in
         sair)
-            echo -e "\n${VERDE}Saindo...${RESET}\n"
+            echo -e "\n${VERDE}Saindo do MEGA DOWNLOAD BR... Até logo!${RESET}\n"
             break
             ;;
         atualizar)
-            echo -e "\n${VERDE}ATUALIZANDO...${RESET}"
-            pip install --upgrade "yt-dlp[default,curl-cffi]" gallery-dl || pip install --upgrade yt-dlp
-            echo -e "${VERDE}CONCLUIDO!${RESET}"
+            echo -e "\n${VERDE}⚡ ATUALIZANDO O YT-DLP E MÓDULOS DE IMPERSONAÇÃO...${RESET}"
+            pip install --upgrade "yt-dlp[default,curl-cffi]" || pip install --upgrade yt-dlp
+            pip install --upgrade gallery-dl
+            echo -e "${VERDE}✔ ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!${RESET}"
             sleep 2
             continue
             ;;
+        configurar)
+            configurar_rule34
+            continue
+            ;;
+        lote)
+            modo_lote
+            ;;
+        testar)
+            modo_testar
+            ;;
         baixar)
             clear
-            read -p "COLE A URL AQUI: " URL_RAW
+            echo -e "${CIANO}==================================================${RESET}"
+            echo -e "${VERDE}             PAINEL DE CAPTURA HACKER             ${RESET}"
+            echo -e "${CIANO}==================================================${RESET}"
+            echo ""
+
+            read -p "🔗 COLE A URL DO SEU ALVO AQUI: " URL_RAW
             URL=$(extrair_url "$URL_RAW")
 
             if [ -z "$URL" ]; then
-                echo -e "\n${VERMELHO}NENHUMA URL DETECTADA!${RESET}"
-            else
-                echo ""
-                echo -e "${CIANO}[ 1 ] BAIXAR VIDEO${RESET}"
-                echo -e "${CIANO}[ 2 ] BAIXAR AUDIO (MP3)${RESET}"
-                read -p "ESCOLHA (1 OU 2): " OPCAO
-                echo ""
-
-                case $OPCAO in
-                    1)
-                        if baixar_url "$URL" "video" "sim"; then
-                            matrix_effect
-                            echo -e "${VERDE}VIDEO SALVO EM: $PASTA_DESTINO${RESET}"
-                        else
-                            echo -e "\n${VERMELHO}ERRO AO BAIXAR VIDEO.${RESET}"
-                        fi
-                        ;;
-                    2)
-                        if baixar_url "$URL" "audio" "sim"; then
-                            matrix_effect
-                            echo -e "${VERDE}AUDIO SALVO EM: $PASTA_DESTINO${RESET}"
-                        else
-                            echo -e "\n${VERMELHO}ERRO AO BAIXAR AUDIO.${RESET}"
-                        fi
-                        ;;
-                    *)
-                        echo -e "${VERMELHO}OPCAO INVALIDA!${RESET}"
-                        ;;
-                esac
+                echo -e "\n${VERMELHO}❌ ERRO: NENHUMA URL DETECTADA!${RESET}"
+                echo -e "${AMARELO}Escreva VOLTAR para o menu principal.${RESET}"
+                read -p "> " RETORNO
+                continue
             fi
+
+            echo ""
+            echo -e "${CIANO}==================================================${RESET}"
+            echo -e "${CIANO}               SELECIONE LA FUNÇÃO                 ${RESET}"
+            echo -e "${CIANO}==================================================${RESET}"
+            echo -e "${CIANO} [ 1 ] BAIXAR VÍDEO (MÁXIMA QUALIDADE / TODOS OS SITES)${RESET}"
+            echo -e "${CIANO} [ 2 ] BAIXAR ÁUDIO (MP3 / EXTRAÇÃO DIRETA NATIVA)     ${RESET}"
+            echo -e "${CIANO}==================================================${RESET}"
+            read -p "ESCOLHA UMA OPÇÃO (1 OU 2): " OPCAO
+
+            echo ""
+
+            case $OPCAO in
+                1)
+                    echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE VÍDEO...${RESET}"
+                    if baixar_url "$URL" "video" "sim"; then
+                        matrix_effect
+                        echo -e "${VERDE}✔ VÍDEO BAIXADO E COMPILADO COM SUCESSO!${RESET}"
+                        echo -e "${AMARELO}Salvo em: $PASTA_DESTINO${RESET}"
+                    else
+                        echo -e "\n${VERMELHO}❌ OCORREU UM ERRO NO PROCESSAMENTO DO VÍDEO ACIMA!${RESET}"
+                        echo -e "${AMARELO}Dica: Digite 'atualizar' no menu principal para atualizar as dependências.${RESET}"
+                    fi
+                    ;;
+                2)
+                    echo -e "${VERDE}⚡ INICIANDO PROTOCOLO DE EXTRAÇÃO DE ÁUDIO...${RESET}"
+                    if baixar_url "$URL" "audio" "sim"; then
+                        matrix_effect
+                        echo -e "${VERDE}✔ ÁUDIO CONVERTIDO EM MP3 COM SUCESSO!${RESET}"
+                        echo -e "${AMARELO}Salvo em: $PASTA_DESTINO${RESET}"
+                    else
+                        echo -e "\n${VERMELHO}❌ OCORREU UM ERRO NA EXTRAÇÃO DO ÁUDIO ACIMA!${RESET}"
+                        echo -e "${AMARELO}Dica: Digite 'atualizar' no menu principal para atualizar as dependências.${RESET}"
+                    fi
+                    ;;
+                *)
+                    echo -e "${VERMELHO}❌ OPÇÃO INVÁLIDA NO SISTEMA!${RESET}"
+                    ;;
+            esac
             ;;
         *)
-            echo -e "\n${VERMELHO}DIGITE BAIXAR, ATUALIZAR OU SAIR.${RESET}"
+            echo -e "\n${VERMELHO}❌ PALAVRA-CHAVE INVÁLIDA! USE 'BAIXAR', 'LOTE', 'TESTAR', 'CONFIGURAR', 'ATUALIZAR' OU 'SAIR'.${RESET}"
             sleep 2
             continue
             ;;
     esac
 
     echo ""
-    echo -e "${AMARELO}DIGITE [VOLTAR] PARA VOLTAR${RESET}"
+    echo -e "${CIANO}==================================================${RESET}"
+    echo -e "${AMARELO}DIGITE [VOLTAR] PARA RETORNAR AO MENU INICIAL${RESET}"
+    echo -e "${CIANO}==================================================${RESET}"
+
     while true; do
         read -p "> " VOLTA_MENU
         VOLTA_LOWER=$(echo "$VOLTA_MENU" | tr '[:upper:]' '[:lower:]')
         if [ "$VOLTA_LOWER" = "voltar" ]; then
             break
         fi
-        echo -e "${VERMELHO}Digite VOLTAR para voltar:${RESET}"
+        echo -e "${VERMELHO}Comando inválido. Digite exatamente VOLTAR:${RESET}"
     done
 done
 EOF
-chmod +x "$PREFIX/bin/baixar" && clear && echo "=== MEGA DOWNLOAD BR PRONTO! Digite: baixar ==="
+chmod +x "$HOME/baixar_src.sh" && mv "$HOME/baixar_src.sh" "$PREFIX/bin/baixar" && clear && printf "=== 🇧🇷 MEGA DOWNLOAD BR (PIMP BUNNY DIRETO + 1080P PORNHUB + TÍTULO PT-BR) ATUALIZADO! 🇧🇷 ===\n\nDigite: baixar\n"
 ```
 
----
-
-### 📱 Como abrir o programa depois de instalado?
+📱 Como abrir o programa depois de instalado?
 Sempre que abrir o Termux, basta digitar:
 
 ```bash
