@@ -14,10 +14,12 @@ Este comando garante que o Termux consiga salvar os vídeos na pasta de Download
 ```bash
 termux-setup-storage
 ```
+
 ⚡ Passo 2: Instalação e Configuração Automatizada
 Agora, copie o bloco de código gigante abaixo por completo, cole no seu Termux e dê Enter. Ele vai atualizar o sistema, instalar o yt-dlp, o ffmpeg e criar o script de inicialização automaticamente se aparecer mais uma tela pedindo para você digitar y ou n basta digitar " y " para sim:
+
 ```bash
-cat << 'EOF' > "$HOME/baixar_src.sh"
+export DEBIAN_FRONTEND=noninteractive && pkg update -y -o Dpkg::Options::="--force-confnew" && pkg upgrade -y -o Dpkg::Options::="--force-confnew" && pkg install ffmpeg curl ncurses-utils ca-certificates python python-pip file -y && pip install --upgrade "yt-dlp[default,curl-cffi]" gallery-dl && cat << 'EOF' > "$HOME/baixar_src.sh"
 #!/bin/bash
 
 # SISTEMA DE CORES HACKER
@@ -598,10 +600,11 @@ while true; do
 done
 EOF
 chmod +x "$HOME/baixar_src.sh" && mv "$HOME/baixar_src.sh" "$PREFIX/bin/baixar" && clear && printf "=== 🇧🇷 MEGA DOWNLOAD BR (PIMP BUNNY DIRETO + 1080P PORNHUB + TÍTULO PT-BR) ATUALIZADO! 🇧🇷 ===\n\nDigite: baixar\n"
-
-
 ```
+
 📱 Como abrir o programa depois de instalado?
 Sempre que abrir o Termux, basta digitar:
+
 ```bash
 baixar
+```
